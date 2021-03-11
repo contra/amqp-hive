@@ -2,11 +2,6 @@
   "name": "amqp-hive",
   "version": "0.0.1",
   "description": "Easy, type-safe worker (bee) processes using AMQP. Offload resource-intensive jobs so you can get back to making that honey 🍯.",
-  "main": "dist/index.js",
-  "scripts": {
-    "prepare": "tsc",
-    "test": "jest"
-  },
   "keywords": [
     "amqp",
     "worker",
@@ -14,8 +9,25 @@
     "task",
     "queue"
   ],
-  "author": "Daniel Rearden",
+  "homepage": "https://github.com/contrawork/amqp-hive",
+  "bugs": {
+    "url": "https://github.com/contrawork/amqp-hive/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/contrawork/amqp-hive.git"
+  },
   "license": "MIT",
+  "author": "Daniel Rearden <danielrearden@gmail.com>",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepare": "tsc",
+    "test": "jest"
+  },
   "devDependencies": {
     "@types/amqplib": "^0.5.17",
     "@types/chance": "^1.1.1",
