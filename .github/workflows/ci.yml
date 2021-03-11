@@ -1,0 +1,32 @@
+name: AMQP Hive CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      rabbitmq:
+        image: bitnami/rabbitmq:latest
+        ports:
+          - 5672:5672
+        env:
+          RABBITMQ_COMMUNITY_PLUGINS: "https://github.com/rabbitmq/rabbitmq-delayed-message-exchange/releases/download/v3.8.0/rabbitmq_delayed_message_exchange-3.8.0.ez"
+          RABBITMQ_PLUGINS: "rabbitmq_delayed_message_exchange"
+        options: >-
+          --health-cmd "rabbitmqctl node_health_check"
+          --health-interval 30s
+          --health-timeout 5s
+          --health-retries 4
+    strategy:
+      matrix:
+        node-version: [12.x, 14.x]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Node.version ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn install --frozen-lockfile
+      - name: test
+        run: yarn test
+        env:
+          RABBITMQ_DSN: "amqp://user:bitnami@localhost:5672"
