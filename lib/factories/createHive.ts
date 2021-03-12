@@ -1,9 +1,10 @@
-import { Connection, Options } from "amqplib";
+import { Connection } from "amqplib";
 import {
   Hive,
   HiveConfiguration,
   Worker,
   WorkerQueueConfiguration,
+  WorkerQueues,
 } from "../types";
 import { createDispatcher } from "./createDispatcher";
 import { createWorker } from "./createWorker";
@@ -62,12 +63,7 @@ export const createHive = async <
       return createDispatcher({ channel, configuration, exchanges });
     },
     createWorker: async (
-      queues: {
-        [Name in keyof TPayloadsByQueueName]: {
-          onMessage: (payload: TPayloadsByQueueName[Name]) => Promise<void>;
-          options?: { consumeOptions?: Options.Consume };
-        };
-      }
+      queues: WorkerQueues<TPayloadsByQueueName>
     ): Promise<Worker<TPayloadsByQueueName>> => {
       // We add a `onReady` callback onto the provided configurations so we can keep track of
       // each consumer and `cancel` each one when `destroy` is called.

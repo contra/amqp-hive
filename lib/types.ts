@@ -1,16 +1,11 @@
-import { Connection, Options } from "amqplib";
+import { Connection, Message, Options } from "amqplib";
 
 export type Hive<TPayloadsByQueueName extends Record<string, any>> = {
   configuration: HiveConfiguration<TPayloadsByQueueName>;
   connection: Connection;
   createDispatcher: () => Dispatcher<TPayloadsByQueueName>;
   createWorker: (
-    queues: {
-      [Name in keyof TPayloadsByQueueName]: {
-        onMessage: (payload: TPayloadsByQueueName[Name]) => Promise<void>;
-        options?: { consumeOptions?: Options.Consume };
-      };
-    }
+    queues: WorkerQueues<TPayloadsByQueueName>
   ) => Promise<Worker<TPayloadsByQueueName>>;
   destroy: () => Promise<void>;
 };
@@ -52,12 +47,27 @@ export type Worker<TPayloadsByQueueName extends Record<string, any>> = {
   >;
 };
 
+export type WorkerQueues<TPayloadsByQueueName extends Record<string, any>> = {
+  [QueueName in keyof TPayloadsByQueueName]: {
+    onMessage: OnMessage<TPayloadsByQueueName, QueueName>;
+    options?: { consumeOptions?: Options.Consume };
+  };
+};
+
 export type WorkerQueueConfiguration<
   TPayloadsByQueueName extends Record<string, any>
 > = {
   [QueueName in keyof TPayloadsByQueueName]: {
     consumeOptions?: Options.Consume;
-    onMessage: (payload: TPayloadsByQueueName[QueueName]) => Promise<void>;
+    onMessage: OnMessage<TPayloadsByQueueName, QueueName>;
     onReady: (consumerTag: string) => void;
   };
 };
+
+export type OnMessage<
+  TPayloadsByQueueName extends Record<string, any>,
+  TQueueName extends keyof TPayloadsByQueueName
+> = (
+  payload: TPayloadsByQueueName[TQueueName],
+  message: Message
+) => Promise<void>;

@@ -27,7 +27,10 @@ export const createWorker = async <
             // Note: message will be null if the consumer is cancelled by RabbitMQ (https://www.rabbitmq.com/consumer-cancel.html)
             if (message) {
               try {
-                await onMessage(JSON.parse(message.content.toString()));
+                await onMessage(
+                  JSON.parse(message.content.toString()),
+                  message
+                );
                 channel.ack(message);
               } catch (error) {
                 channel.nack(message, false, false);
