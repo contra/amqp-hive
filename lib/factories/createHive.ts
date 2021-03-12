@@ -62,13 +62,15 @@ export const createHive = async <
     createDispatcher: () => {
       return createDispatcher({ channel, configuration, exchanges });
     },
-    createWorker: async (
-      queues: WorkerQueues<TPayloadsByQueueName>
+    createWorker: async <TContext>(
+      queues: WorkerQueues<TPayloadsByQueueName, TContext>,
+      context?: TContext
     ): Promise<Worker<TPayloadsByQueueName>> => {
       // We add a `onReady` callback onto the provided configurations so we can keep track of
       // each consumer and `cancel` each one when `destroy` is called.
       return createWorker({
         channel,
+        context,
         queueConfigurations: Object.keys(queues).reduce(
           (acc, queueName: keyof TPayloadsByQueueName) => {
             const { onMessage, options: { consumeOptions } = {} } = queues[
@@ -81,7 +83,7 @@ export const createHive = async <
             };
             return acc;
           },
-          {} as WorkerQueueConfiguration<TPayloadsByQueueName>
+          {} as WorkerQueueConfiguration<TPayloadsByQueueName, any>
         ),
       });
     },

@@ -88,13 +88,13 @@ describe("Basic functionality", () => {
     const dispatcher = hives[0].createDispatcher();
     await hives[1].createWorker({
       Foo: {
-        onMessage: async (message) => {
-          fooMessagesReceivedPromise.push(message);
+        onMessage: async (payload) => {
+          fooMessagesReceivedPromise.push(payload);
         },
       },
       Bar: {
-        onMessage: async (message) => {
-          barMessagesReceivedPromise.push(message);
+        onMessage: async (payload) => {
+          barMessagesReceivedPromise.push(payload);
         },
       },
     });

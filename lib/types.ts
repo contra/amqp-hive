@@ -4,8 +4,9 @@ export type Hive<TPayloadsByQueueName extends Record<string, any>> = {
   configuration: HiveConfiguration<TPayloadsByQueueName>;
   connection: Connection;
   createDispatcher: () => Dispatcher<TPayloadsByQueueName>;
-  createWorker: (
-    queues: WorkerQueues<TPayloadsByQueueName>
+  createWorker: <TContext>(
+    queues: WorkerQueues<TPayloadsByQueueName, TContext>,
+    context?: TContext
   ) => Promise<Worker<TPayloadsByQueueName>>;
   destroy: () => Promise<void>;
 };
@@ -47,27 +48,32 @@ export type Worker<TPayloadsByQueueName extends Record<string, any>> = {
   >;
 };
 
-export type WorkerQueues<TPayloadsByQueueName extends Record<string, any>> = {
-  [QueueName in keyof TPayloadsByQueueName]: {
-    onMessage: OnMessage<TPayloadsByQueueName, QueueName>;
+export type WorkerQueues<
+  TPayloadsByQueueName extends Record<string, any>,
+  TContext
+> = {
+  [TQueueName in keyof TPayloadsByQueueName]: {
+    onMessage: OnMessage<TPayloadsByQueueName, TQueueName, TContext>;
     options?: { consumeOptions?: Options.Consume };
   };
 };
 
 export type WorkerQueueConfiguration<
-  TPayloadsByQueueName extends Record<string, any>
+  TPayloadsByQueueName extends Record<string, any>,
+  TContext
 > = {
-  [QueueName in keyof TPayloadsByQueueName]: {
+  [TQueueName in keyof TPayloadsByQueueName]: {
     consumeOptions?: Options.Consume;
-    onMessage: OnMessage<TPayloadsByQueueName, QueueName>;
+    onMessage: OnMessage<TPayloadsByQueueName, TQueueName, TContext>;
     onReady: (consumerTag: string) => void;
   };
 };
 
 export type OnMessage<
   TPayloadsByQueueName extends Record<string, any>,
-  TQueueName extends keyof TPayloadsByQueueName
+  TQueueName extends keyof TPayloadsByQueueName,
+  TContext
 > = (
   payload: TPayloadsByQueueName[TQueueName],
-  message: Message
+  context: { message: Message } & TContext
 ) => Promise<void>;

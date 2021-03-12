@@ -2,17 +2,23 @@ import { Channel } from "amqplib";
 import { QueueConsumerInitializationFailureError } from "../errors";
 import { Worker, WorkerQueueConfiguration } from "../types";
 
-type WorkerConfiguration<TPayloadsByQueueName extends Record<string, any>> = {
+type WorkerConfiguration<
+  TPayloadsByQueueName extends Record<string, any>,
+  TContext
+> = {
   channel: Channel;
-  queueConfigurations: WorkerQueueConfiguration<TPayloadsByQueueName>;
+  queueConfigurations: WorkerQueueConfiguration<TPayloadsByQueueName, TContext>;
+  context: TContext;
 };
 
 export const createWorker = async <
-  TPayloadsByQueueName extends Record<string, any>
+  TPayloadsByQueueName extends Record<string, any>,
+  TContext
 >({
   channel,
   queueConfigurations,
-}: WorkerConfiguration<TPayloadsByQueueName>): Promise<
+  context,
+}: WorkerConfiguration<TPayloadsByQueueName, TContext>): Promise<
   Worker<TPayloadsByQueueName>
 > => {
   const queues = {} as Worker<TPayloadsByQueueName>["queues"];
@@ -27,10 +33,10 @@ export const createWorker = async <
             // Note: message will be null if the consumer is cancelled by RabbitMQ (https://www.rabbitmq.com/consumer-cancel.html)
             if (message) {
               try {
-                await onMessage(
-                  JSON.parse(message.content.toString()),
-                  message
-                );
+                await onMessage(JSON.parse(message.content.toString()), {
+                  ...context,
+                  message,
+                });
                 channel.ack(message);
               } catch (error) {
                 channel.nack(message, false, false);
