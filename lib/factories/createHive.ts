@@ -58,6 +58,7 @@ export const createHive = async <
 
   return {
     configuration,
+    channel,
     connection,
     createDispatcher: () => {
       return createDispatcher({ channel, configuration, exchanges });

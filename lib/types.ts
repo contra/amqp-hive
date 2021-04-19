@@ -1,6 +1,7 @@
-import { Connection, Message, Options } from "amqplib";
+import { Channel, Connection, Message, Options } from "amqplib";
 
 export type Hive<TPayloadsByQueueName extends Record<string, any>> = {
+  channel: Channel;
   configuration: HiveConfiguration<TPayloadsByQueueName>;
   connection: Connection;
   createDispatcher: () => Dispatcher<TPayloadsByQueueName>;
