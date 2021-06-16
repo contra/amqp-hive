@@ -1,27 +1,25 @@
 import { Channel } from "amqplib";
 import { QueueConsumerInitializationFailureError } from "../errors";
-import { Worker, WorkerQueueConfiguration } from "../types";
+import { Worker, WorkerQueue, WorkerQueueConfiguration } from "../types";
 
 type WorkerConfiguration<
-  TPayloadsByQueueName extends Record<string, any>,
+  TQueues extends Record<string, WorkerQueue>,
   TContext
 > = {
   channel: Channel;
-  queueConfigurations: WorkerQueueConfiguration<TPayloadsByQueueName, TContext>;
+  queueConfigurations: WorkerQueueConfiguration<TQueues, TContext>;
   context: TContext;
 };
 
 export const createWorker = async <
-  TPayloadsByQueueName extends Record<string, any>,
+  TQueues extends Record<string, WorkerQueue>,
   TContext
 >({
   channel,
   queueConfigurations,
   context,
-}: WorkerConfiguration<TPayloadsByQueueName, TContext>): Promise<
-  Worker<TPayloadsByQueueName>
-> => {
-  const queues = {} as Worker<TPayloadsByQueueName>["queues"];
+}: WorkerConfiguration<TQueues, TContext>): Promise<Worker<TQueues>> => {
+  const queues = {} as Worker<TQueues>["queues"];
 
   await Promise.all(
     Object.keys(queueConfigurations).map(async (name) => {
@@ -50,7 +48,7 @@ export const createWorker = async <
 
         onReady(consumerTag);
 
-        queues[name as keyof TPayloadsByQueueName] = { consumerTag };
+        queues[name as keyof TQueues] = { consumerTag };
       } catch (error) {
         throw new QueueConsumerInitializationFailureError(name, error);
       }

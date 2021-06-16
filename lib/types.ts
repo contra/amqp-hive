@@ -1,20 +1,18 @@
 import { Channel, Connection, Message, Options } from "amqplib";
 
-export type Hive<TPayloadsByQueueName extends Record<string, any>> = {
+export type Hive<TQueues extends Record<string, WorkerQueue>> = {
   channel: Channel;
-  configuration: HiveConfiguration<TPayloadsByQueueName>;
+  configuration: HiveConfiguration<TQueues>;
   connection: Connection;
-  createDispatcher: () => Dispatcher<TPayloadsByQueueName>;
+  createDispatcher: () => Dispatcher<TQueues>;
   createWorker: <TContext>(
-    queues: WorkerQueues<TPayloadsByQueueName, TContext>,
+    queues: WorkerQueues<TQueues, TContext>,
     context?: TContext
-  ) => Promise<Worker<TPayloadsByQueueName>>;
+  ) => Promise<Worker<TQueues>>;
   destroy: () => Promise<void>;
 };
 
-export type HiveConfiguration<
-  TPayloadsByQueueName extends Record<string, any>
-> = {
+export type HiveConfiguration<TQueues extends Record<string, WorkerQueue>> = {
   exchanges?: Record<
     "direct" | "delayed",
     {
@@ -23,7 +21,7 @@ export type HiveConfiguration<
     }
   >;
   queues: Record<
-    keyof TPayloadsByQueueName,
+    keyof TQueues,
     {
       isDelayed?: boolean;
       options?: Options.AssertQueue;
@@ -32,49 +30,51 @@ export type HiveConfiguration<
   >;
 };
 
-export type Dispatcher<TPayloadsByQueueName extends Record<string, any>> = {
-  dispatch: <TName extends keyof TPayloadsByQueueName>(
+export type Dispatcher<TQueues extends Record<string, WorkerQueue>> = {
+  dispatch: <TName extends keyof TQueues>(
     queueName: TName,
-    payload: TPayloadsByQueueName[TName],
+    payload: TQueues[TName]["payload"],
     options?: Options.Publish & { delay?: number }
   ) => Promise<boolean>;
 };
 
-export type Worker<TPayloadsByQueueName extends Record<string, any>> = {
+export type Worker<TQueues extends Record<string, WorkerQueue>> = {
   queues: Record<
-    keyof TPayloadsByQueueName,
+    keyof TQueues,
     {
       consumerTag: string;
     }
   >;
 };
 
-export type WorkerQueues<
-  TPayloadsByQueueName extends Record<string, any>,
-  TContext
-> = {
-  [TQueueName in keyof TPayloadsByQueueName]: {
-    onMessage: OnMessage<TPayloadsByQueueName, TQueueName, TContext>;
+export type WorkerQueue = {
+  payload: any;
+  result: any;
+};
+
+export type WorkerQueues<TQueues extends Record<string, any>, TContext> = {
+  [TQueueName in keyof TQueues]: {
+    onMessage: OnMessage<TQueues, TQueueName, TContext>;
     options?: { consumeOptions?: Options.Consume };
   };
 };
 
 export type WorkerQueueConfiguration<
-  TPayloadsByQueueName extends Record<string, any>,
+  TQueues extends Record<string, WorkerQueue>,
   TContext
 > = {
-  [TQueueName in keyof TPayloadsByQueueName]: {
+  [TQueueName in keyof TQueues]: {
     consumeOptions?: Options.Consume;
-    onMessage: OnMessage<TPayloadsByQueueName, TQueueName, TContext>;
+    onMessage: OnMessage<TQueues, TQueueName, TContext>;
     onReady: (consumerTag: string) => void;
   };
 };
 
 export type OnMessage<
-  TPayloadsByQueueName extends Record<string, any>,
-  TQueueName extends keyof TPayloadsByQueueName,
+  TQueues extends Record<string, WorkerQueue>,
+  TQueueName extends keyof TQueues,
   TContext
 > = (
-  payload: TPayloadsByQueueName[TQueueName],
+  payload: TQueues[TQueueName]["payload"],
   context: { message: Message } & TContext
-) => Promise<void>;
+) => Promise<TQueues[TQueueName]["result"]>;
