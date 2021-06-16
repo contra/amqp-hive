@@ -3,18 +3,17 @@ import {
   Hive,
   HiveConfiguration,
   Worker,
+  WorkerQueue,
   WorkerQueueConfiguration,
   WorkerQueues,
 } from "../types";
 import { createDispatcher } from "./createDispatcher";
 import { createWorker } from "./createWorker";
 
-export const createHive = async <
-  TPayloadsByQueueName extends Record<string, any>
->(
+export const createHive = async <TQueues extends Record<string, WorkerQueue>>(
   connectionOrConnectionPromise: Connection | Promise<Connection>,
-  configuration: HiveConfiguration<TPayloadsByQueueName>
-): Promise<Hive<TPayloadsByQueueName>> => {
+  configuration: HiveConfiguration<TQueues>
+): Promise<Hive<TQueues>> => {
   const connection =
     "then" in connectionOrConnectionPromise
       ? await connectionOrConnectionPromise
@@ -64,16 +63,16 @@ export const createHive = async <
       return createDispatcher({ channel, configuration, exchanges });
     },
     createWorker: async <TContext>(
-      queues: WorkerQueues<TPayloadsByQueueName, TContext>,
+      queues: WorkerQueues<TQueues, TContext>,
       context?: TContext
-    ): Promise<Worker<TPayloadsByQueueName>> => {
+    ): Promise<Worker<TQueues>> => {
       // We add a `onReady` callback onto the provided configurations so we can keep track of
       // each consumer and `cancel` each one when `destroy` is called.
       return createWorker({
         channel,
         context,
         queueConfigurations: Object.keys(queues).reduce(
-          (acc, queueName: keyof TPayloadsByQueueName) => {
+          (acc, queueName: keyof TQueues) => {
             const { onMessage, options: { consumeOptions } = {} } = queues[
               queueName
             ];
@@ -84,7 +83,7 @@ export const createHive = async <
             };
             return acc;
           },
-          {} as WorkerQueueConfiguration<TPayloadsByQueueName, any>
+          {} as WorkerQueueConfiguration<TQueues, any>
         ),
       });
     },

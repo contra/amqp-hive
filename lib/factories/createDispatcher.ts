@@ -1,17 +1,15 @@
-import { Dispatcher, HiveConfiguration } from "../types";
+import { Dispatcher, HiveConfiguration, WorkerQueue } from "../types";
 import { Channel, Replies } from "amqplib";
 
-export const createDispatcher = <
-  TPayloadsByQueueName extends Record<string, any>
->({
+export const createDispatcher = <TQueues extends Record<string, WorkerQueue>>({
   channel,
   configuration,
   exchanges,
 }: {
   channel: Channel;
-  configuration: HiveConfiguration<TPayloadsByQueueName>;
+  configuration: HiveConfiguration<TQueues>;
   exchanges: Record<"direct" | "delayed", Replies.AssertExchange>;
-}): Dispatcher<TPayloadsByQueueName> => {
+}): Dispatcher<TQueues> => {
   return {
     dispatch: async (queueName, payload, options = {}) => {
       const { isDelayed = false, publishOptions } = configuration.queues[

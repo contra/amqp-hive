@@ -4,9 +4,9 @@ import { Hive, createHive } from "../lib";
 
 type PushablePromise<T> = Promise<T[]> & { push: (item: T) => number };
 
-type PayloadsByQueueName = {
-  Foo: { fooCount: number };
-  Bar: { barCount: number };
+type Queues = {
+  Foo: { payload: { fooCount: number }; result: number };
+  Bar: { payload: { bar: string }; result: string };
 };
 
 const chance = Chance();
@@ -37,7 +37,7 @@ const createPushablePromise = <T>(
 };
 
 describe("Basic functionality", () => {
-  let hives: Hive<PayloadsByQueueName>[] = [];
+  let hives: Hive<Queues>[] = [];
 
   afterEach(async () => {
     await Promise.all(
@@ -56,33 +56,33 @@ describe("Basic functionality", () => {
       },
     };
     hives = await Promise.all([
-      createHive<PayloadsByQueueName>(
+      createHive<Queues>(
         connect(process.env.RABBITMQ_DSN as string),
         configuration
       ),
-      createHive<PayloadsByQueueName>(
+      createHive<Queues>(
         connect(process.env.RABBITMQ_DSN as string),
         configuration
       ),
     ]);
 
-    const fooMessagesSent: PayloadsByQueueName["Foo"][] = [
+    const fooMessagesSent = [
       { fooCount: chance.integer() },
       { fooCount: chance.integer() },
       { fooCount: chance.integer() },
       { fooCount: chance.integer() },
       { fooCount: chance.integer() },
     ];
-    const barMessagesSent: PayloadsByQueueName["Bar"][] = [
-      { barCount: chance.integer() },
-      { barCount: chance.integer() },
-      { barCount: chance.integer() },
-      { barCount: chance.integer() },
-      { barCount: chance.integer() },
+    const barMessagesSent = [
+      { bar: chance.word() },
+      { bar: chance.word() },
+      { bar: chance.word() },
+      { bar: chance.word() },
+      { bar: chance.word() },
     ];
     const [fooMessagesReceivedPromise, barMessagesReceivedPromise] = [
-      createPushablePromise<PayloadsByQueueName["Foo"]>(fooMessagesSent.length),
-      createPushablePromise<PayloadsByQueueName["Bar"]>(barMessagesSent.length),
+      createPushablePromise<{ fooCount: number }>(fooMessagesSent.length),
+      createPushablePromise<{ bar: string }>(barMessagesSent.length),
     ];
 
     const dispatcher = hives[0].createDispatcher();
@@ -90,11 +90,15 @@ describe("Basic functionality", () => {
       Foo: {
         onMessage: async (payload) => {
           fooMessagesReceivedPromise.push(payload);
+
+          return payload.fooCount;
         },
       },
       Bar: {
         onMessage: async (payload) => {
           barMessagesReceivedPromise.push(payload);
+
+          return payload.bar;
         },
       },
     });
