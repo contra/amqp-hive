@@ -1,6 +1,6 @@
 {
   "name": "amqp-hive",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Easy, type-safe worker (bee) processes using AMQP. Offload resource-intensive jobs so you can get back to making that honey 🍯.",
   "keywords": [
     "amqp",
