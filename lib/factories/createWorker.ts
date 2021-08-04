@@ -23,8 +23,14 @@ export const createWorker = async <
 
   await Promise.all(
     Object.keys(queueConfigurations).map(async (name) => {
-      const { consumeOptions, onMessage, onReady } = queueConfigurations[name]!;
+      const {
+        consumeOptions,
+        onMessage,
+        onReady,
+        prefetchCount = 1,
+      } = queueConfigurations[name]!;
       try {
+        await channel.prefetch(prefetchCount);
         const { consumerTag } = await channel.consume(
           name as string,
           async (message) => {

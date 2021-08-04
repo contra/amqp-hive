@@ -67,6 +67,7 @@ export type WorkerQueueConfiguration<
     consumeOptions?: Options.Consume;
     onMessage: OnMessage<TQueues, TQueueName, TContext>;
     onReady: (consumerTag: string) => void;
+    prefetchCount?: number;
   };
 };
 
